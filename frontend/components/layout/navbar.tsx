@@ -55,7 +55,7 @@ export function Navbar() {
 
       <div className="flex items-center gap-4">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger render={
             <div className="relative hidden lg:flex items-center group cursor-text" onClick={() => setOpen(true)}>
               <Search className="absolute left-4 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               <div className="flex h-11 w-72 items-center justify-between rounded-lg border border-border/40 bg-background/50 pl-10 pr-4 text-sm text-muted-foreground shadow-inner transition-all group-hover:border-primary/50 group-hover:bg-background group-hover:shadow-[0_0_15px_rgba(139,92,246,0.15)]">
@@ -65,7 +65,7 @@ export function Navbar() {
                 </kbd>
               </div>
             </div>
-          </DialogTrigger>
+          } />
           <DialogContent className="sm:max-w-xl p-0 overflow-hidden border-border/50 bg-background/95 backdrop-blur-3xl shadow-2xl">
             <DialogHeader className="sr-only">
               <DialogTitle>Command Palette</DialogTitle>
