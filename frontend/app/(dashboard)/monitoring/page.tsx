@@ -156,7 +156,7 @@ export default function MonitoringPage() {
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold flex items-center gap-1.5">
                       <Activity className="w-3.5 h-3.5 text-blue-400" /> Uptime
                     </span>
-                    <p className="text-2xl font-black text-foreground tracking-tight">{health.uptime_seconds}s</p>
+                    <p className="text-2xl font-black text-foreground tracking-tight">{formatMaybeNumber(health.uptime_seconds, 0)}s</p>
                     <p className="text-xs font-medium text-muted-foreground leading-relaxed">Time since last restart.</p>
                   </div>
 
