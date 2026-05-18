@@ -39,6 +39,7 @@ export default function FeatureFlagsPage() {
       lastUpdated: `Step ${state?.step_count ?? 0}`,
       description: "Autonomous Python simulation feature flag managed by AI Copilot.",
       rules: "AI Controlled Cohort",
+      createdAt: new Date().toISOString(),
       isBackend: true,
     };
   }, [state]);
@@ -130,7 +131,9 @@ export default function FeatureFlagsPage() {
       {/* Flag Grid */}
       <div className="grid gap-6 mt-8 relative z-10">
         {filtered.map((flag) => {
-          const isCurrentlyActive = activeCustomFlagId ? flag.id === activeCustomFlagId : flag.isBackend;
+          const isCurrentlyActive = flag.isBackend 
+            ? (state ? !(state.is_done ?? false) : false) 
+            : (activeCustomFlagId ? flag.id === activeCustomFlagId : false);
 
           return (
             <Card 

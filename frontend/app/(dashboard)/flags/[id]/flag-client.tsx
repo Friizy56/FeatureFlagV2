@@ -71,7 +71,8 @@ export function FlagDetailClient() {
     }
   }, [id, state, customFlag]);
 
-  const lastObs: Observation | undefined = state?.history?.[state.history.length - 1]?.observation;
+  const lastHistoryItem = state?.history?.[state.history.length - 1];
+  const lastObs: Observation | undefined = lastHistoryItem?.observation;
   const isBackendFlag = lastObs?.feature_name === id;
   const extra = lastObs?.extra_context as Record<string, unknown> | undefined;
   const patternRisk = Number(extra?.pattern_risk ?? 0);
@@ -145,7 +146,7 @@ export function FlagDetailClient() {
   const flagDesc = customFlag ? customFlag.description : "Autonomous AI Copilot managed simulation flag.";
   
   // Real-time AI metrics
-  const currentReward = lastObs?.reward ?? -0.136;
+  const currentReward = lastHistoryItem?.reward ?? -0.136;
   const totalReward = state?.total_reward ?? -0.136;
   const currentStep = state?.step_count ?? 8;
   const activeUsers = lastObs?.active_users ?? 239;

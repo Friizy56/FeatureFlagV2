@@ -110,7 +110,7 @@ def test_step_endpoint():
         # Take a step
         action = {
             "action_type": "INCREASE_ROLLOUT",
-            "target_percentage": 10.0,
+            "target_percentage": 5.0,
             "reason": "Starting rollout"
         }
         
@@ -127,7 +127,7 @@ def test_step_endpoint():
         assert "done" in data, "Response should have done flag"
         
         obs = data["observation"]
-        assert obs["current_rollout_percentage"] == 10.0, "Rollout should be 10%"
+        assert obs["current_rollout_percentage"] == 5.0, "Rollout should be 5%"
         
         print(f"   ✅ Step successful")
         print(f"   📊 Rollout: {obs['current_rollout_percentage']}%")
