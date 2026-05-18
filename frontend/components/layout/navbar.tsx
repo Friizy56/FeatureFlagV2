@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { useEnv } from "@/components/env-provider";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ export function Navbar() {
   const { state } = useEnv();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const lastObs = state?.history?.[state.history.length - 1]?.observation;
   const tenantId = String(
@@ -37,6 +39,11 @@ export function Navbar() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  const runCommand = (command: () => void) => {
+    setOpen(false);
+    command();
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between border-b border-border/10 bg-card/40 px-8 backdrop-blur-2xl">
@@ -76,7 +83,7 @@ export function Navbar() {
               <input 
                 type="text" 
                 placeholder="Type a command or search..." 
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
@@ -90,13 +97,13 @@ export function Navbar() {
               ) : (
                 <div className="space-y-1">
                   <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">Suggestions</div>
-                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setOpen(false)}>
+                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer text-foreground" onClick={() => runCommand(() => router.push('/feature-flags'))}>
                     <Globe className="h-4 w-4 text-primary" /> Review Active Feature Flags
                   </button>
-                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setOpen(false)}>
+                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer text-foreground" onClick={() => runCommand(() => router.push('/monitoring'))}>
                     <Bell className="h-4 w-4 text-amber-500" /> View Incident Alerts
                   </button>
-                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setOpen(false)}>
+                  <button className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer text-foreground" onClick={() => runCommand(() => router.push('/settings'))}>
                     <Shield className="h-4 w-4 text-green-500" /> Platform Security Settings
                   </button>
                 </div>

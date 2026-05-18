@@ -46,7 +46,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
         {/* Advanced Ambient Aurora Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden bg-[#030303]">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-background dark:bg-[#030303]">
           {/* Animated Mesh Gradients */}
           <motion.div 
             animate={{ 
