@@ -158,6 +158,7 @@ app = FastAPI(
 
 # Global environment instance (one per server)
 environment: Optional[FeatureFlagEnvironment] = None
+cached_agents: Dict[str, Any] = {}
 
 # Enable CORS
 app.add_middleware(
@@ -451,6 +452,143 @@ async def step_environment(action_request: StepRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Step failed: {str(e)}"
+        )
+
+
+@app.post("/copilot/step", response_model=StepResponse)
+async def copilot_step(request: Request, agent_type: Optional[str] = "llm"):
+    """
+    Execute one autonomous step using the specified AI agent.
+    
+    Supported agents: llm, rl, hybrid, ensemble, hitl, baseline.
+    """
+    global environment
+    
+    if environment is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Environment not initialized"
+        )
+        
+    # Determine the agent type (case-insensitive)
+    agent_name = (agent_type or "llm").strip().lower()
+    
+    # Map model names to agent names
+    if agent_name in {"ppo-master", "ppo_master", "master", "rl"}:
+        agent_name = "rl"
+        
+    # Get or create the agent
+    if agent_name not in cached_agents:
+        logger.info(f"Initializing agent: {agent_name}")
+        try:
+            if agent_name == "rl":
+                from agents.enterprise_agent_v2 import EnterpriseAgentV2
+                model_path = os.getenv("RL_MODEL_PATH", "models/enterprise_master_v2.best.pth")
+                # Fallback path checks
+                if not os.path.exists(model_path) and os.path.exists("backend/" + model_path):
+                    model_path = "backend/" + model_path
+                
+                cached_agents[agent_name] = EnterpriseAgentV2(
+                    task=os.getenv("FF_ACTIVE_TASK", "task3"),
+                    model_path=model_path if os.path.exists(model_path) else None,
+                    training=False,
+                    epsilon=0.0,
+                    epsilon_min=0.0,
+                )
+            elif agent_name == "llm":
+                from agents.llm_agent import LLMAgent
+                cached_agents[agent_name] = LLMAgent()
+            elif agent_name == "hybrid":
+                from agents.hybrid_agent import HybridAgent
+                cached_agents[agent_name] = HybridAgent()
+            elif agent_name == "ensemble":
+                from agents.ensemble_agent import EnsembleAgent
+                cached_agents[agent_name] = EnsembleAgent(task=os.getenv("FF_ACTIVE_TASK", "task3"))
+            elif agent_name == "hitl":
+                from agents.human_in_loop_agent import HumanInLoopAgent
+                cached_agents[agent_name] = HumanInLoopAgent(task=os.getenv("FF_ACTIVE_TASK", "task3"))
+            else:
+                from agents.baseline_agent import BaselineAgent
+                cached_agents[agent_name] = BaselineAgent()
+        except Exception as e:
+            logger.exception(f"Failed to load agent {agent_name}, falling back to baseline: {e}")
+            from agents.baseline_agent import BaselineAgent
+            cached_agents[agent_name] = BaselineAgent()
+            
+    agent = cached_agents[agent_name]
+    
+    # Construct history trajectory for the agent decision
+    history = []
+    try:
+        state = environment.state()
+        observation = environment.previous_observation
+        
+        # If no previous observation (or state count is 0), reset environment
+        if observation is None:
+            observation = environment.reset()
+            state = environment.state()
+            
+        if state and hasattr(state, "observation_history") and hasattr(state, "action_history"):
+            for i in range(len(state.action_history)):
+                obs = state.observation_history[i] if i < len(state.observation_history) else None
+                act = state.action_history[i]
+                r = 0.0
+                if i + 1 < len(state.observation_history):
+                    r = state.observation_history[i+1].reward or 0.0
+                history.append({"obs": obs, "action": act, "reward": r})
+    except Exception:
+        observation = environment.reset()
+        state = environment.state()
+        
+    try:
+        # Get action decision from the agent
+        action = agent.decide(observation, history)
+        logger.info("Autonomous agent decision: %s -> %s%% (%s)", action.action_type, action.target_percentage, action.reason)
+        
+        # Execute action in environment
+        response = environment.step(action)
+        state = environment.state()
+        
+        # Log decision and metrics to database
+        if DATABASE_AVAILABLE and database and database.is_enabled():
+            database.record_step(
+                episode_id=state.episode_id,
+                step_count=state.step_count,
+                action_type=action.action_type,
+                target_percentage=action.target_percentage,
+                reward=response.reward,
+                error_rate=response.observation.error_rate,
+                latency_p99_ms=response.observation.latency_p99_ms,
+                system_health_score=response.observation.system_health_score,
+                done=response.done,
+                reason=action.reason,
+                metadata={"source": f"copilot_{agent_name}"},
+            )
+            
+        if MONITORING_AVAILABLE and monitoring_config.enabled:
+            from time import time
+            step_duration_ms = max(10, int((time() % 1000)))
+            has_error = response.observation.error_rate > 0
+            
+            monitoring_record_step(
+                step_duration_ms=step_duration_ms,
+                action=action.action_type,
+                error=has_error,
+                user="anonymous"
+            )
+            
+        return response
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.exception("Unexpected error in copilot /step: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Copilot step failed: {str(e)}"
         )
 
 

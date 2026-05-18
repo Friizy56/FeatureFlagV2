@@ -352,6 +352,12 @@ export const api = {
     });
   },
 
+  async copilotStep(agentType: string): Promise<StepResponse> {
+    return this.request<StepResponse>(`/copilot/step?agent_type=${agentType}`, {
+      method: "POST",
+    });
+  },
+
   async getState(): Promise<State> {
     try {
       const rawState = await this.request<unknown>("/state", { method: "GET" });

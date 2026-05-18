@@ -45,7 +45,7 @@ export function FlagDetailClient() {
   const { user } = useUser();
   const isManager = user?.publicMetadata?.role === "Manager";
 
-  const { state, customFlags, updateCustomFlag, isSimulating, setIsSimulating, fetchData } = useEnv();
+  const { state, customFlags, updateCustomFlag, isSimulating, setIsSimulating, fetchData, agentType, setAgentType } = useEnv();
   const customFlag = customFlags.find(f => f.id === id);
 
   const [isOn, setIsOn] = useState(true);
@@ -196,6 +196,23 @@ export function FlagDetailClient() {
           </div>
           
           <div className="flex flex-wrap items-center gap-4">
+            {/* Active Agent Select Dropdown */}
+            <div className="relative flex items-center bg-background/60 backdrop-blur-xl border border-border/60 hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 rounded-lg px-3 py-2.5 shadow-sm gap-2 text-xs font-mono font-bold text-muted-foreground select-none">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span>AGENT:</span>
+              <select
+                value={agentType}
+                onChange={(e) => setAgentType(e.target.value)}
+                className="bg-transparent text-foreground border-none focus:outline-none cursor-pointer font-bold uppercase tracking-wider text-[11px]"
+              >
+                <option value="llm" className="bg-background text-foreground">Groq/OpenAI LLM</option>
+                <option value="rl" className="bg-background text-foreground">PPO-Master RL</option>
+                <option value="hybrid" className="bg-background text-foreground">DevOps Hybrid</option>
+                <option value="ensemble" className="bg-background text-foreground">Ensemble Policy</option>
+                <option value="baseline" className="bg-background text-foreground">Baseline Rules</option>
+              </select>
+            </div>
+
             <Button 
               variant={isSimulating ? "default" : "outline"}
               onClick={() => setIsSimulating(!isSimulating)}
