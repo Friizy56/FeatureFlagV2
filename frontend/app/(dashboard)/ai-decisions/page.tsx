@@ -18,7 +18,7 @@ import { useEnv } from "@/components/env-provider";
 import { cn } from "@/lib/utils";
 
 export default function AIDecisionsPage() {
-  const { state } = useEnv();
+  const { state, agentType, setAgentType } = useEnv();
 
   const history = state?.history || [];
   const rewardData = history.map((step, index: number) => ({
@@ -81,11 +81,21 @@ export default function AIDecisionsPage() {
             Watch your autonomous deployment co-pilot in real-time. It continuously analyzes infrastructure health, evaluates anomaly risks, and automatically adjusts feature flag traffic to guarantee zero-downtime rollouts.
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1.5 font-mono text-xs">
+        <div className="flex flex-col items-end gap-2 font-mono text-xs">
           <div className="flex items-center gap-2 text-muted-foreground">
             <BrainCircuit className="h-3.5 w-3.5 text-primary" />
-            <span>MODEL:</span>
-            <span className="text-foreground font-semibold">PPO-MASTER</span>
+            <span>ACTIVE COPILOT:</span>
+            <select
+              value={agentType}
+              onChange={(e) => setAgentType(e.target.value)}
+              className="bg-background/80 text-foreground border border-border/50 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary font-bold cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
+            >
+              <option value="llm">Groq/OpenAI LLM</option>
+              <option value="rl">PPO-Master RL</option>
+              <option value="hybrid">DevOps Hybrid</option>
+              <option value="ensemble">Ensemble Policy</option>
+              <option value="baseline">Baseline Rules</option>
+            </select>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className={cn(

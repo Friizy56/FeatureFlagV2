@@ -31,6 +31,8 @@ interface EnvContextType {
   deleteCustomFlag: (id: string) => void;
   activeCustomFlagId: string | null;
   setActiveCustomFlagId: (id: string | null) => void;
+  agentType: string;
+  setAgentType: (val: string) => void;
 }
 
 const EnvContext = createContext<EnvContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
   const [connectionState, setConnectionState] = useState<"connected" | "disconnected" | "checking">("checking");
   const [connectionText, setConnectionText] = useState("Checking Connection...");
   const [isSimulating, setIsSimulating] = useState(false);
+  const [agentType, setAgentTypeState] = useState<string>("llm");
 
   const [customFlags, setCustomFlags] = useState<CustomFlag[]>([]);
   const [activeCustomFlagId, setActiveCustomFlagIdState] = useState<string | null>(null);
@@ -85,6 +88,11 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
       const activeId = localStorage.getItem("active_custom_flag_id");
       if (activeId) {
         setActiveCustomFlagIdState(activeId);
+      }
+
+      const storedAgent = localStorage.getItem("feature_flag_copilot_agent_type");
+      if (storedAgent) {
+        setAgentTypeState(storedAgent);
       }
     } catch (e) {
       console.error("Failed to load custom flags from localStorage", e);
@@ -138,6 +146,11 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
     } catch(e){}
   }, []);
 
+  const setAgentType = useCallback((type: string) => {
+    setAgentTypeState(type);
+    try { localStorage.setItem("feature_flag_copilot_agent_type", type); } catch(e){}
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       const [dashData, stateData] = await Promise.all([
@@ -158,17 +171,13 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
   const runSimulationStep = useCallback(async () => {
     if (!state) return;
     try {
-      await api.step({
-        action_type: "MAINTAIN",
-        target_percentage: state.history[state.history.length - 1]?.observation?.current_rollout_percentage ?? 0,
-        reason: "Autonomous simulation step",
-      });
+      await api.copilotStep(agentType);
       await fetchData();
     } catch (error) {
       console.error("Simulation step failed:", error);
       setIsSimulating(false);
     }
-  }, [state, fetchData]);
+  }, [state, fetchData, agentType]);
 
   useEffect(() => {
     fetchData();
@@ -193,6 +202,8 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
         deleteCustomFlag,
         activeCustomFlagId,
         setActiveCustomFlagId,
+        agentType,
+        setAgentType,
       }}
     >
       {children}

@@ -24,16 +24,23 @@ function readStoredBaseUrl(): string | null {
 
 /**
  * Resolve API base URL with environment awareness.
- * Priority: 1) Runtime env var, 2) Build-time env var, 3) Fallback defaults
+ * Priority: 1) Explicit build-time or runtime env var, 2) Stored localStorage overrides, 3) Fallback defaults
  */
 export const getApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
+    // 1. Prioritize environment variable first (especially in production Vercel)
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+      return normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+    }
+
+    // 2. Fall back to manually saved localStorage overrides (e.g. from Settings page)
     const stored = resolvedBaseUrl || readStoredBaseUrl();
     if (stored) return stored;
+
+    // 3. System defaults
     return (
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
       (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api` : undefined) ||
-      'http://127.0.0.1:8000' // Local dev fallback using IPv4
+      'http://127.0.0.1:8000' // Local dev fallback
     );
   }
   
@@ -69,8 +76,11 @@ export const apiFetch = async (
     }
     return response;
   } catch (error) {
-    console.warn(`Network error fetching ${url}. Attempting auto-recovery fallback to http://127.0.0.1:8000...`);
-    if (baseUrl !== 'http://127.0.0.1:8000') {
+    const isLocalhost = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    if (isLocalhost && baseUrl !== 'http://127.0.0.1:8000') {
+      console.warn(`Network error fetching ${url}. Attempting auto-recovery fallback to http://127.0.0.1:8000...`);
       try {
         const fallbackUrl = normalizeUrl('http://127.0.0.1:8000', endpoint);
         const fallbackResponse = await fetch(fallbackUrl, config);
@@ -339,6 +349,12 @@ export const api = {
     return this.request<StepResponse>("/step", {
       method: "POST",
       body: JSON.stringify(action),
+    });
+  },
+
+  async copilotStep(agentType: string): Promise<StepResponse> {
+    return this.request<StepResponse>(`/copilot/step?agent_type=${agentType}`, {
+      method: "POST",
     });
   },
 

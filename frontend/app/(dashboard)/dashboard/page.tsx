@@ -50,7 +50,9 @@ const Dashboard = () => {
     isSimulating, 
     setIsSimulating, 
     runSimulationStep, 
-    fetchData 
+    fetchData,
+    agentType,
+    setAgentType
   } = useEnv();
   const loading = useMemo(() => connectionState === "checking" && !data && !state, [connectionState, data, state]);
 
@@ -133,6 +135,23 @@ const Dashboard = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
+          {/* Active Agent Select Dropdown */}
+          <div className="relative flex items-center bg-background/60 backdrop-blur-xl border border-border/60 hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 rounded-lg px-3 py-3 shadow-sm gap-2 text-xs font-mono font-bold text-muted-foreground select-none">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span>AGENT:</span>
+            <select
+              value={agentType}
+              onChange={(e) => setAgentType(e.target.value)}
+              className="bg-transparent text-foreground border-none focus:outline-none cursor-pointer font-bold uppercase tracking-wider text-[11px]"
+            >
+              <option value="llm" className="bg-background text-foreground">Groq/OpenAI LLM</option>
+              <option value="rl" className="bg-background text-foreground">PPO-Master RL</option>
+              <option value="hybrid" className="bg-background text-foreground">DevOps Hybrid</option>
+              <option value="ensemble" className="bg-background text-foreground">Ensemble Policy</option>
+              <option value="baseline" className="bg-background text-foreground">Baseline Rules</option>
+            </select>
+          </div>
+
           {/* Elegant Copilot Switch Button */}
           <Button 
             variant={isSimulating ? "default" : "outline"} 
@@ -377,6 +396,11 @@ const Dashboard = () => {
                       ? (healthScore > 0.8 ? "System stability is optimal. AI Copilot recommends expanding rollout to capture more evaluation data." : "Elevated risk detected. AI Copilot is observing before making further deployment decisions.") 
                       : "Autonomous mode is paused. The AI Copilot is standing by for operator authorization."}
                   </p>
+
+                  <div className="pt-4 border-t border-border/30 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <span>Active Brain</span>
+                    <span className="font-mono text-foreground font-bold tracking-wider">{agentType === "llm" ? "Groq/OpenAI LLM" : agentType === "rl" ? "PPO-Master RL" : agentType === "hybrid" ? "DevOps Hybrid" : agentType === "ensemble" ? "Ensemble Policy" : "Baseline Rules"}</span>
+                  </div>
 
                   <div className="pt-4 border-t border-border/30 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     <span>Autonomous Mode</span>

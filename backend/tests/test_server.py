@@ -137,6 +137,34 @@ def test_step_endpoint():
     return True
 
 
+def test_copilot_step_endpoint():
+    """Test /copilot/step endpoint with different agent types"""
+    print("\n🧪 Testing /copilot/step endpoint...")
+    
+    with httpx.Client() as client:
+        # First reset
+        client.post("http://127.0.0.1:8001/reset")
+        
+        # Take an autonomous step using baseline rules first (fastest, no LLM cost)
+        response = client.post(
+            "http://127.0.0.1:8001/copilot/step?agent_type=baseline"
+        )
+        
+        assert response.status_code == 200, f"Copilot baseline step failed: {response.status_code}"
+        
+        data = response.json()
+        assert "observation" in data, "Response should have observation"
+        assert "reward" in data, "Response should have reward"
+        assert "done" in data, "Response should have done flag"
+        
+        obs = data["observation"]
+        print(f"   ✅ Copilot baseline step successful")
+        print(f"   📊 Rollout: {obs['current_rollout_percentage']}%")
+        print(f"   📊 Reward: {data['reward']:+.2f}")
+        
+    return True
+
+
 def test_state_endpoint():
     """Test /state endpoint"""
     print("\n🧪 Testing /state endpoint...")
@@ -254,6 +282,7 @@ def main():
     results.append(test_health_endpoint())
     results.append(test_reset_endpoint())
     results.append(test_step_endpoint())
+    results.append(test_copilot_step_endpoint())
     results.append(test_state_endpoint())
     results.append(test_invalid_action())
     results.append(test_info_endpoint())
