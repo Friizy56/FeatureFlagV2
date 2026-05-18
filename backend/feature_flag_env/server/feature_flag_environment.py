@@ -595,6 +595,7 @@ class FeatureFlagEnvironment:
                 "latency_p99_ms": observation.latency_p99_ms,
             }
             self.analytics["benchmark"] = self._benchmark_engine.analyze(metrics)
+            observation.extra_context["benchmarking"] = self.analytics["benchmark"]
 
     def _handle_tool_call(self, action: FeatureFlagAction) -> StepResponse:
         """Handle TOOL_CALL action — dispatches to ToolManager, no rollout change."""

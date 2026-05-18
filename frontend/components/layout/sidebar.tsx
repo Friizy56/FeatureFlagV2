@@ -17,22 +17,22 @@ import { UserButton, useUser } from "@clerk/nextjs";
 
 const sidebarNavItems = [
   {
-    title: "Dashboard",
-    href: "/",
+    title: "Overview",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "AI Decisions",
-    href: "/ai-decisions",
-    icon: BrainCircuit,
-  },
-  {
-    title: "Control",
+    title: "Feature Flags",
     href: "/flags",
     icon: Flag,
   },
   {
-    title: "Monitoring",
+    title: "AI Copilot",
+    href: "/ai-decisions",
+    icon: BrainCircuit,
+  },
+  {
+    title: "Observability",
     href: "/monitoring",
     icon: Beaker,
   },
@@ -70,7 +70,7 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-1.5 px-4 py-4 custom-scrollbar overflow-y-auto">
         {sidebarNavItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
           return (
             <Link
               key={item.href}

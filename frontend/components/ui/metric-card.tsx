@@ -27,18 +27,18 @@ export function MetricCard({ title, value, icon, trend, description, className }
     >
       <Card className={cn("glassy-card relative overflow-hidden h-full transition-all hover:border-primary/30", className)}>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            {icon && <div className="text-primary/60">{icon}</div>}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm md:text-base font-bold tracking-widest uppercase text-muted-foreground/80">{title}</p>
+            {icon && <div className="text-primary [&>svg]:w-6 [&>svg]:h-6 bg-primary/10 p-2.5 rounded-xl border border-primary/20 shadow-[0_0_15px_rgba(139,92,246,0.15)]">{icon}</div>}
           </div>
           
-          <div className="mt-4 flex items-baseline gap-2">
-            <h2 className="text-3xl font-bold tracking-tight text-glow">{value}</h2>
+          <div className="mt-6 flex items-baseline gap-3">
+            <h2 className="text-5xl font-black tracking-tighter text-glow">{value}</h2>
             
             {trend && (
               <span
                 className={cn(
-                  "text-xs font-bold px-2 py-0.5 rounded-full border",
+                  "text-xs font-bold px-2 py-0.5 rounded-md border",
                   trend.isPositive === true
                     ? "bg-green-500/10 text-green-500 border-green-500/20"
                     : trend.isPositive === false

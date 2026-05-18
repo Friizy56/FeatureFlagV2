@@ -48,28 +48,28 @@
 }
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
+  --background: oklch(0.98 0.005 260); /* Ultra-clean premium off-white */
+  --foreground: oklch(0.20 0.01 260); /* Rich dark slate */
+  --card: oklch(1 0 0); /* Crisp pure white */
+  --card-foreground: oklch(0.20 0.01 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
+  --popover-foreground: oklch(0.20 0.01 260);
   
-  --primary: oklch(0.5 0.2 270);
+  --primary: oklch(0.55 0.2 270); /* Vibrant electric purple */
   --primary-foreground: oklch(0.98 0 0);
   
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.2 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.96 0.01 270);
-  --accent-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.94 0.01 260); /* Soft elevated gray */
+  --secondary-foreground: oklch(0.25 0.01 260);
+  --muted: oklch(0.94 0.01 260);
+  --muted-foreground: oklch(0.45 0.01 260);
+  --accent: oklch(0.94 0.01 270);
+  --accent-foreground: oklch(0.25 0.01 260);
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
   
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.5 0.2 270);
+  --border: oklch(0.86 0.01 260); /* Crisp structural borders */
+  --input: oklch(0.86 0.01 260);
+  --ring: oklch(0.55 0.2 270);
   
   --radius: 0.75rem;
 
@@ -79,14 +79,14 @@
   --chart-4: oklch(0.6 0.15 150);
   --chart-5: oklch(0.6 0.15 40);
 
-  --sidebar: oklch(0.99 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.5 0.2 270);
+  --sidebar: oklch(0.98 0.005 260);
+  --sidebar-foreground: oklch(0.20 0.01 260);
+  --sidebar-primary: oklch(0.55 0.2 270);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.96 0.01 270);
-  --sidebar-accent-foreground: oklch(0.2 0 0);
-  --sidebar-border: oklch(0.9 0 0);
-  --sidebar-ring: oklch(0.5 0.2 270);
+  --sidebar-accent: oklch(0.94 0.01 270);
+  --sidebar-accent-foreground: oklch(0.25 0.01 260);
+  --sidebar-border: oklch(0.86 0.01 260);
+  --sidebar-ring: oklch(0.55 0.2 270);
 }
 
 .dark {
@@ -143,10 +143,10 @@
 @layer utilities {
   .glassy-card {
     /* Glassmorphic panels with backdrop blur and soft shadow */
-    @apply border border-border/40 bg-card/40 backdrop-blur-xl shadow-lg transition-all duration-300;
+    @apply border border-border/60 bg-card/80 dark:bg-card/40 backdrop-blur-xl shadow-lg transition-all duration-300;
   }
   .glassy-card:hover {
-    @apply border-border/80 bg-card/60 shadow-xl;
+    @apply border-border bg-card dark:bg-card/60 shadow-xl;
   }
   
   .progress-gradient {

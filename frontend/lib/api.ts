@@ -27,20 +27,20 @@ function readStoredBaseUrl(): string | null {
  * Priority: 1) Runtime env var, 2) Build-time env var, 3) Fallback defaults
  */
 export const getApiBaseUrl = (): string => {
-  // Client-side: Use NEXT_PUBLIC_ prefixed vars (exposed to browser)
   if (typeof window !== 'undefined') {
+    const stored = resolvedBaseUrl || readStoredBaseUrl();
+    if (stored) return stored;
     return (
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api` : undefined) ||
-      'http://localhost:8000' // Local dev fallback
+      'http://127.0.0.1:8000' // Local dev fallback using IPv4
     );
   }
   
-  // Server-side (Node.js): Use non-prefixed vars
   return (
     process.env.API_BASE_URL ||
     (process.env.ENV_HOST && process.env.ENV_PORT ? `http://${process.env.ENV_HOST}:${process.env.ENV_PORT}` : undefined) ||
-    'http://localhost:8000'
+    'http://127.0.0.1:8000'
   );
 };
 
@@ -64,15 +64,26 @@ export const apiFetch = async (
   
   try {
     const response = await fetch(url, config);
-    
-    // Log errors in development
     if (process.env.NODE_ENV === 'development' && !response.ok) {
       console.error(`API Error: ${response.status} ${response.statusText} at ${url}`);
     }
-    
     return response;
   } catch (error) {
-    console.error(`Network error fetching ${url}:`, error);
+    console.warn(`Network error fetching ${url}. Attempting auto-recovery fallback to http://127.0.0.1:8000...`);
+    if (baseUrl !== 'http://127.0.0.1:8000') {
+      try {
+        const fallbackUrl = normalizeUrl('http://127.0.0.1:8000', endpoint);
+        const fallbackResponse = await fetch(fallbackUrl, config);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(API_BASE_URL_STORAGE_KEY, 'http://127.0.0.1:8000');
+          resolvedBaseUrl = 'http://127.0.0.1:8000';
+          console.info("Auto-recovery successful. Updated API base URL to http://127.0.0.1:8000");
+        }
+        return fallbackResponse;
+      } catch (fallbackErr) {
+        console.error(`Fallback fetch also failed for http://127.0.0.1:8000:`, fallbackErr);
+      }
+    }
     throw new Error(`Failed to connect to API at ${baseUrl}. Is the backend running?`);
   }
 };

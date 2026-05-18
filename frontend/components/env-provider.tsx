@@ -3,6 +3,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { api, DashboardData, State } from "@/lib/api";
 
+export interface CustomFlag {
+  id: string;
+  name: string;
+  rollout: number;
+  status: boolean;
+  scenario: string;
+  difficulty: string;
+  lastUpdated: string;
+  createdAt: string;
+  description: string;
+  rules: string;
+}
+
 interface EnvContextType {
   dashboard: DashboardData | null;
   state: State | null;
@@ -12,6 +25,12 @@ interface EnvContextType {
   setIsSimulating: (val: boolean) => void;
   runSimulationStep: () => Promise<void>;
   fetchData: () => Promise<void>;
+  customFlags: CustomFlag[];
+  addCustomFlag: (flag: Omit<CustomFlag, "id" | "lastUpdated" | "createdAt">) => void;
+  updateCustomFlag: (id: string, updates: Partial<CustomFlag>) => void;
+  deleteCustomFlag: (id: string) => void;
+  activeCustomFlagId: string | null;
+  setActiveCustomFlagId: (id: string | null) => void;
 }
 
 const EnvContext = createContext<EnvContextType | undefined>(undefined);
@@ -22,6 +41,102 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
   const [connectionState, setConnectionState] = useState<"connected" | "disconnected" | "checking">("checking");
   const [connectionText, setConnectionText] = useState("Checking Connection...");
   const [isSimulating, setIsSimulating] = useState(false);
+
+  const [customFlags, setCustomFlags] = useState<CustomFlag[]>([]);
+  const [activeCustomFlagId, setActiveCustomFlagIdState] = useState<string | null>(null);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("custom_feature_flags");
+      if (stored) {
+        setCustomFlags(JSON.parse(stored));
+      } else {
+        const initialCustom: CustomFlag[] = [
+          {
+            id: "flag-checkout-v2",
+            name: "NextGen Checkout Flow",
+            rollout: 50,
+            status: true,
+            scenario: "Staging Environment",
+            difficulty: "High Complexity",
+            lastUpdated: "Just now",
+            createdAt: new Date().toISOString(),
+            description: "Redesigned one-click checkout experience with Stripe Elements and AI fraud detection.",
+            rules: "Targeting US & EU Beta Cohorts",
+          },
+          {
+            id: "flag-ai-recommendations",
+            name: "AI Product Recommendations",
+            rollout: 15,
+            status: true,
+            scenario: "Production",
+            difficulty: "Medium Complexity",
+            lastUpdated: "2 hours ago",
+            createdAt: new Date(Date.now() - 7200000).toISOString(),
+            description: "Personalized product carousels powered by Vertex AI matching engine.",
+            rules: "Targeting 15% random traffic",
+          }
+        ];
+        setCustomFlags(initialCustom);
+        localStorage.setItem("custom_feature_flags", JSON.stringify(initialCustom));
+      }
+
+      const activeId = localStorage.getItem("active_custom_flag_id");
+      if (activeId) {
+        setActiveCustomFlagIdState(activeId);
+      }
+    } catch (e) {
+      console.error("Failed to load custom flags from localStorage", e);
+    }
+  }, []);
+
+  const addCustomFlag = useCallback((flagData: Omit<CustomFlag, "id" | "lastUpdated" | "createdAt">) => {
+    const newFlag: CustomFlag = {
+      ...flagData,
+      id: `flag-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      lastUpdated: "Just now",
+      createdAt: new Date().toISOString(),
+    };
+    setCustomFlags(prev => {
+      const updated = [newFlag, ...prev];
+      try { localStorage.setItem("custom_feature_flags", JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+    setActiveCustomFlagIdState(newFlag.id);
+    try { localStorage.setItem("active_custom_flag_id", newFlag.id); } catch(e){}
+  }, []);
+
+  const updateCustomFlag = useCallback((id: string, updates: Partial<CustomFlag>) => {
+    setCustomFlags(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, ...updates, lastUpdated: "Just now" } : f);
+      try { localStorage.setItem("custom_feature_flags", JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  }, []);
+
+  const deleteCustomFlag = useCallback((id: string) => {
+    setCustomFlags(prev => {
+      const updated = prev.filter(f => f.id !== id);
+      try { localStorage.setItem("custom_feature_flags", JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+    setActiveCustomFlagIdState(prevActive => {
+      if (prevActive === id) {
+        try { localStorage.removeItem("active_custom_flag_id"); } catch(e){}
+        return null;
+      }
+      return prevActive;
+    });
+  }, []);
+
+  const setActiveCustomFlagId = useCallback((id: string | null) => {
+    setActiveCustomFlagIdState(id);
+    try {
+      if (id) localStorage.setItem("active_custom_flag_id", id);
+      else localStorage.removeItem("active_custom_flag_id");
+    } catch(e){}
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -43,7 +158,6 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
   const runSimulationStep = useCallback(async () => {
     if (!state) return;
     try {
-      // Very simple simulation: just a "Maintain" action to keep the loop going
       await api.step({
         action_type: "MAINTAIN",
         target_percentage: state.history[state.history.length - 1]?.observation?.current_rollout_percentage ?? 0,
@@ -73,6 +187,12 @@ export const EnvProvider = ({ children }: { children: ReactNode }) => {
         setIsSimulating,
         runSimulationStep,
         fetchData,
+        customFlags,
+        addCustomFlag,
+        updateCustomFlag,
+        deleteCustomFlag,
+        activeCustomFlagId,
+        setActiveCustomFlagId,
       }}
     >
       {children}
